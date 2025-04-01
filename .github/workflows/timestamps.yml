@@ -4,24 +4,47 @@ on:
   issues:
     types:
       - closed
-      - labeled
+  project_card:
+    types:
+      - moved
 
 permissions:
-  issues: write  # Needed to access issue metadata
-  repository-projects: write  # Needed to update custom fields
+  issues: write
+  repository-projects: write  # Required for GraphQL updates
 
 env:
   PROJECT_ID: "PVT_kwHOAAK3U84A1tT_"  # Your actual project ID
   FIELD_START_ID: "PVTF_lAHOAAK3U84A1tT_zgrImXs"  # Start timestamp field ID
   FIELD_END_ID: "PVTF_lAHOAAK3U84A1tT_zgrIm1k"  # End timestamp field ID
-  LABEL_NAME: "this sprint"
+  THIS_SPRINT_COLUMN: "This Sprint"  # Ensure this matches exactly
 
 jobs:
   update-timestamps:
     runs-on: ubuntu-latest
     steps:
+      - name: Get moved column name
+        if: github.event_name == 'project_card'
+        run: |
+          echo "MOVED_COLUMN=${{ github.event.changes.column_id.to }}" >> $GITHUB_ENV
+
+      - name: Set start timestamp when issue is moved to 'This Sprint'
+        if: github.event_name == 'project_card' && env.MOVED_COLUMN == env.THIS_SPRINT_COLUMN
+        run: |
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          ISSUE_ID=$(jq -r '.project_card.content_node_id' <<< '${{ toJson(github.event) }}')
+
+          curl -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Content-Type: application/json" \
+               -H "Accept: application/vnd.github.v3+json" \
+               https://api.github.com/graphql \
+               -d @- <<EOF
+          {
+            "query": "mutation { updateProjectV2ItemFieldValue(input: { projectId: \"$PROJECT_ID\", itemId: \"$ISSUE_ID\", fieldId: \"$FIELD_START_ID\", value: { text: \"$TIMESTAMP\" } }) { clientMutationId } }"
+          }
+          EOF
+
       - name: Set end timestamp when issue is closed
-        if: github.event.action == 'closed'
+        if: github.event_name == 'issues'
         run: |
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           ISSUE_ID=$(jq -r '.issue.node_id' <<< '${{ toJson(github.event) }}')
@@ -33,21 +56,5 @@ jobs:
                -d @- <<EOF
           {
             "query": "mutation { updateProjectV2ItemFieldValue(input: { projectId: \"$PROJECT_ID\", itemId: \"$ISSUE_ID\", fieldId: \"$FIELD_END_ID\", value: { text: \"$TIMESTAMP\" } }) { clientMutationId } }"
-          }
-          EOF
-
-      - name: Set start timestamp when issue is labeled
-        if: github.event.action == 'labeled' && github.event.label.name == env.LABEL_NAME
-        run: |
-          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          ISSUE_ID=$(jq -r '.issue.node_id' <<< '${{ toJson(github.event) }}')
-
-          curl -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-               -H "Content-Type: application/json" \
-               -H "Accept: application/vnd.github.v3+json" \
-               https://api.github.com/graphql \
-               -d @- <<EOF
-          {
-            "query": "mutation { updateProjectV2ItemFieldValue(input: { projectId: \"$PROJECT_ID\", itemId: \"$ISSUE_ID\", fieldId: \"$FIELD_START_ID\", value: { text: \"$TIMESTAMP\" } }) { clientMutationId } }"
           }
           EOF
