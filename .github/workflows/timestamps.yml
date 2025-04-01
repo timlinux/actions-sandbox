@@ -11,9 +11,9 @@ permissions:
   repository-projects: write  # Needed to update custom fields
 
 env:
-  PROJECT_ID: "5"  # Replace with your GitHub project ID
-  FIELD_START_ID: "PVTF_lAHOAAK3U84A1tT_zgrImXs"  # Replace with the actual field ID
-  FIELD_END_ID: "PVTF_lAHOAAK3U84A1tT_zgrIm1k"  # Replace with the actual field ID
+  PROJECT_ID: "PVT_kwHOAAK3U84A1tT_"  # Your actual project ID
+  FIELD_START_ID: "PVTF_lAHOAAK3U84A1tT_zgrImXs"  # Start timestamp field ID
+  FIELD_END_ID: "PVTF_lAHOAAK3U84A1tT_zgrIm1k"  # End timestamp field ID
   LABEL_NAME: "this sprint"
 
 jobs:
