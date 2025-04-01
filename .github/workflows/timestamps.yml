@@ -6,6 +6,9 @@ on:
       - closed
       - labeled
 
+permissions:
+  issues: write  # Grant write access to issues
+
 env:
   LABEL_NAME: "this sprint"
 
@@ -19,7 +22,7 @@ jobs:
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           ISSUE_BODY="${{ github.event.issue.body }}"
           NEW_BODY="${ISSUE_BODY}\n\n**End Timestamp:** $TIMESTAMP"
-          curl -X PATCH -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          curl -X PATCH -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }} \
                -d "{\"body\": \"${NEW_BODY}\"}"
@@ -30,7 +33,7 @@ jobs:
           TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           ISSUE_BODY="${{ github.event.issue.body }}"
           NEW_BODY="${ISSUE_BODY}\n\n**Start Timestamp:** $TIMESTAMP"
-          curl -X PATCH -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          curl -X PATCH -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
                -H "Accept: application/vnd.github.v3+json" \
                https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }} \
                -d "{\"body\": \"${NEW_BODY}\"}"
