@@ -10,7 +10,9 @@ on:
 
 permissions:
   issues: write
-  repository-projects: write  # Required for GraphQL updates
+  repository-projects: write
+  actions: read
+  pull-requests: read
 
 env:
   PROJECT_ID: "PVT_kwHOAAK3U84A1tT_"  # Your actual project ID
